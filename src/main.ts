@@ -1,4 +1,6 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
+import { enable as enableRemote, initialize } from "@electron/remote/main";
+initialize();
 import * as path from "path";
 
 let mainWindow: Electron.BrowserWindow | null;
@@ -8,6 +10,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     height: 600,
     webPreferences: {
+      preload: path.join(process.cwd(), "dist", "renderer.js"),
       nodeIntegration: true,
       backgroundThrottling: false,
       nodeIntegrationInSubFrames: true,
@@ -15,7 +18,7 @@ function createWindow() {
     },
     width: 800,
   });
-
+  enableRemote(mainWindow.webContents);
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(path.join(__dirname, '..', 'src', "index.html")));
 
@@ -29,6 +32,7 @@ function createWindow() {
     // when you should delete the corresponding element.
     mainWindow = null;
   });
+  ipcMain.on("log", console.log);
 }
 
 // This method will be called when Electron has finished

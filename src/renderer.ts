@@ -4,6 +4,7 @@
 import * as path from "path";
 import * as et from "./index";
 import * as remote from "@electron/remote";
+import { ipcRenderer } from "electron";
 
 let packagePath = null;
 const searchPaths = ["app", "app.asar", "default_app.asar"];
@@ -20,35 +21,35 @@ console.log(packagePath);
 
 console.log(remote.getCurrentWindow().webContents.id);
 console.log(remote.getCurrentWindow().id);
-
+ipcRenderer.on("log", console.log);
 let electronThread = new et.ElectronThread(
   {
     module: require.resolve("./renderer.worker"),
     options: {
-      maxCallTime: Infinity,
+      maxCallTime: Infinity
     },
   },
   remote.getCurrentWindow()
 );
 
 let test = async () => {
+  // @ts-ignore
   let start = new Date();
   console.log(start.getMilliseconds());
-  for (var i = 0; i < 50; i++) {
+  for (var i = 0; i < 5; i++) {
     try {
-      electronThread
+      await electronThread
         .run<string>({
           method: "getProcessId",
           parameters: ["#", i],
         })
         .then((r) => {
-          console.log(r);
-          console.log(new Date().getMilliseconds());
+          console.log("returnValue", r, "time", new Date().getMilliseconds());
+        }).catch(err => {
+          console.log({error: err});
         })
-        .catch((r) => console.log(r));
       //console.log(r);
     } catch (err) {
-      console.log(err);
     }
 
     // r
@@ -65,5 +66,5 @@ let test2 = () => {
   r.then((r) => console.log(r)).catch((e) => console.log(e));
 };
 
-test();
+test()
 //test2();

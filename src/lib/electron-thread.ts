@@ -1,7 +1,5 @@
-import * as electron from "electron";
+import type { BrowserWindow } from "electron";
 import { BrowserWindow as RemoteWindow } from "@electron/remote";
-import { exec } from "child_process";
-const BrowserWindow = RemoteWindow ? RemoteWindow : electron.BrowserWindow;
 import {
   IThreadRunOptions,
   ThreadLaunchOptions,
@@ -11,8 +9,8 @@ import {
 class Thread {
   public id: number;
   private threadLaunchOptions: ThreadLaunchOptions;
-  public parent: electron.BrowserWindow;
-  public window: electron.BrowserWindow | null;
+  public parent: BrowserWindow;
+  public window: BrowserWindow | null;
   public channel: string;
   private _errorsCounter: number = 0;
   private _valid: boolean;
@@ -44,7 +42,7 @@ class Thread {
   }
 
   private createWindow() {
-    this.window = new BrowserWindow(
+    this.window = new RemoteWindow(
       this.threadLaunchOptions.options?.windowOptions
     );
     this.window.loadFile(__dirname + "/thread.html");
@@ -101,12 +99,12 @@ class Thread {
 export class ElectronThread {
   private threads: Thread[] = [];
   private options: IThreadLaunchOptions;
-  private window: electron.BrowserWindow;
+  private window: BrowserWindow;
   public get activeThreads(): number {
     return this.threads.filter((t) => t.running == true).length;
   }
 
-  constructor(options: IThreadLaunchOptions, win: electron.BrowserWindow) {
+  constructor(options: IThreadLaunchOptions, win: BrowserWindow) {
     this.options = options;
     this.window = win;
   }
@@ -114,36 +112,30 @@ export class ElectronThread {
   run<T>(options: IThreadRunOptions): Promise<T> {
     return new Promise((resolve, reject) => {
       let thread = new Thread(
-        new ThreadLaunchOptions(
-          this.options,
-          options,
-          this.window
-        )
+        new ThreadLaunchOptions(this.options, options, this.window)
       );
       this.threads.push(thread);
-
       //#region IPC SYNC
       thread.window?.webContents.on(
         "ipc-message-sync",
-        (event: Electron.Event, channel: string, ...args: any) => {
+        function (event, channel: string, ...args: any[]) {
           if (channel === "thread-preloader:module-parameters") {
-            (event.returnValue as any) = options;
+            event.returnValue = options;
           }
         }
       );
       //#endregion
-
       //#region IPC
       thread.window?.webContents.on(
         "ipc-message",
-        (event: Electron.Event, channel: string, ...args: any) => {
+        function (event: Electron.Event, channel: string, ...args: any[]) {
           if (channel === "electron-thread:console.log") {
-            console.log(...args);
+            console.log(`[${channel}]`, ...args);
           } else if (channel === "electron-thread:console.error") {
-            console.error(...args);
+            console.error(`[${channel}]`, ...args);
           } else if (channel === "thread-preloader:module-return") {
             thread.end();
-            resolve(args);
+            resolve(args as any);
           } else if (channel === "thread-preloader:module-error") {
             thread.end();
             reject(...args);
@@ -153,36 +145,42 @@ export class ElectronThread {
       //#endregion
 
       //#region ERROR HANDLER
-      thread.window?.webContents.on("did-fail-load", () => {
-        let error = thread.throwError("did-fail-load");
-        if (error) {
-          reject(error);
+      thread.window?.webContents.on(
+        "did-fail-load",
+        function (ev, ...args: any[]) {
+          let error = thread.throwError("did-fail-load");
+          if (error) {
+            reject(error);
+          }
         }
-      });
-      thread.window?.webContents.on("crashed", () => {
+      );
+      thread.window?.webContents.on("crashed", function (ev, ...args: any[]) {
         let error = thread.throwError("crashed");
         if (error) {
           reject(error);
         }
       });
-      thread.window?.webContents.on("unresponsive", () => {
+      thread.window?.webContents.on("unresponsive", function (...args: any[]) {
         let error = thread.throwError("unresponsive");
         if (error) {
           reject(error);
         }
       });
-      thread.window?.webContents.on("destroyed", () => {
+      thread.window?.webContents.on("destroyed", function (...args: any[]) {
         let error = thread.throwError("destroyed");
         if (error) {
           reject(error);
         }
       });
-      thread.window?.webContents.on("preload-error", () => {
-        let error = thread.throwError("preload-error");
-        if (error) {
-          reject(error);
+      thread.window?.webContents.on(
+        "preload-error",
+        function (ev, ...args: any[]) {
+          let error = thread.throwError("preload-error");
+          if (error) {
+            reject(error);
+          }
         }
-      });
+      );
       //#endregion
     });
   }

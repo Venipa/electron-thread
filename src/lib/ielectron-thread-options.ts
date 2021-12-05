@@ -31,7 +31,7 @@ export class ThreadLaunchOptions implements IThreadLaunchOptions, IThreadRunOpti
         let DEFAULT_OPTIONS = {
             maxCallTime: Infinity,
             maxRetries: 10,
-            maxConcurrentThreads: require('os').cpus().length,
+            maxConcurrentThreads: 1,
             windowOptions: {
                 show: false,
                 parent: parentWebContents,

@@ -1,6 +1,6 @@
 {
-  "name": "electron-thread",
-  "version": "1.0.0",
+  "name": "electron-threads",
+  "version": "1.0.1",
   "description": "Electron thread workers using BrowserWindow headless windows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "publish": "tsc && npm pack && npm publish",
-    "dev:test": "npm run build && electron ./dist/main.js"
+    "dev:test": "npm run build && electron ./dist/main.js --trace-warnings"
   },
   "repository": "https://github.com/Venipa/electron-thread.git",
   "keywords": [
