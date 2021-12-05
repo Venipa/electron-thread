@@ -1,4 +1,4 @@
-# Electron Thread
+# Electron Thread (v14 or higher)
 
 **Electron workers using BrowserWindow headless window**
 
@@ -16,16 +16,16 @@ npm install --save electron-thread
 
 Given a file in renderer, child.worker.js:
 
-```bash
-# Import the ThreadExport class
+```ts
+// Import the ThreadExport class
 import { ThreadExport } from "electron-thread";
 
-# Write your methods
+// Write your methods
 function getProcessId(paramOne, paramTwo) {
     return `${paramOne}:${paramTwo} ${process.pid}`;
 }
 
-# Register your methods
+// Register your methods
 ThreadExport.export({
     getProcessId: getProcessId
 });
@@ -33,14 +33,14 @@ ThreadExport.export({
 
 And a renderer file where we call:
 
-```bash
-# Import the ElectronThread class
+```ts
+// Import the ElectronThread class
 import { ElectronThread } from "electron-thread";
-
-# initialise using your relative path to child.thread.js and resolve the path with require.resolve()
+const mainWindow = new BrowserWindow();
+// initialise using your relative path to child.thread.js and resolve the path with require.resolve(), also add the root/main window for context
 let electronThread = new ElectronThread({
     module: require.resolve('./child.worker')
-});
+}, mainWindow);
 
 let test = async () => {
   for (var i = 0; i < 10; i++) {
