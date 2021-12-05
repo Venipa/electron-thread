@@ -2,25 +2,27 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import { enable as enableRemote, initialize } from "@electron/remote/main";
 initialize();
 import * as path from "path";
+import { ElectronThread } from "./lib/electron-thread";
 
 let mainWindow: Electron.BrowserWindow | null;
-console.log((setTimeout(() => {}) as any).unref)
+console.log((setTimeout(() => {}) as any).unref);
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     height: 600,
     webPreferences: {
-      preload: path.join(process.cwd(), "dist", "renderer.js"),
       nodeIntegration: true,
       backgroundThrottling: false,
       nodeIntegrationInSubFrames: true,
-      nodeIntegrationInWorker: true
+      nodeIntegrationInWorker: true,
     },
     width: 800,
   });
   enableRemote(mainWindow.webContents);
   // and load the index.html of the app.
-  mainWindow.loadFile(path.join(path.join(__dirname, '..', 'src', "index.html")));
+  mainWindow.loadFile(
+    path.join(path.join(__dirname, "..", "src", "index.html"))
+  );
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
@@ -33,6 +35,24 @@ function createWindow() {
     mainWindow = null;
   });
   ipcMain.on("log", console.log);
+
+  const testThread = new ElectronThread(
+    {
+      module: require.resolve("./renderer.worker"),
+      options: {
+        maxCallTime: Infinity,
+      },
+    },
+    mainWindow
+  );
+  new Array(5).fill(0).forEach((_, i) => {
+    testThread
+      .run({
+        method: "getProcessId",
+        parameters: ["#", i],
+      })
+      .then((...args) => console.log(`[Thread #${i}]: `, ...args));
+  });
 }
 
 // This method will be called when Electron has finished

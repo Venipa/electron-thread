@@ -1,11 +1,11 @@
-import type { BrowserWindow } from "electron";
-import { BrowserWindow as RemoteWindow } from "@electron/remote";
+import { BrowserWindow } from "electron";
+import { BrowserWindow as RemoteWin } from "@electron/remote";
 import {
   IThreadRunOptions,
   ThreadLaunchOptions,
   IThreadLaunchOptions,
 } from "./ielectron-thread-options";
-
+const RemoteWindow: typeof BrowserWindow = BrowserWindow;
 class Thread {
   public id: number;
   private threadLaunchOptions: ThreadLaunchOptions;
