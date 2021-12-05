@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ThreadExport = void 0;
 const electron_1 = require("electron");
 class ThreadExport {
     static async export(methods) {

@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "es2019",
     "module": "commonjs",
-    "lib": ["dom", "es2019"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "noImplicitAny": true,
     "sourceMap": true,
     "outDir": "dist",
@@ -10,12 +14,13 @@
     "strict": true,
     "declaration": true,
     "strictPropertyInitialization": false,
-    "moduleResolution": "node",
-    "paths": {
-      "*": ["node_modules/*"]
-    }
+    "moduleResolution": "node"
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 }

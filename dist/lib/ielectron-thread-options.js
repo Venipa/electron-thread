@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ThreadLaunchOptions = void 0;
 class ThreadLaunchOptions {
     constructor(launchOptions, threadRunOptions, parentWebContents) {
         this.module = launchOptions.module;

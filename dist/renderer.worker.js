@@ -7,7 +7,7 @@ function getProcessId(paramOne, paramTwo) {
 }
 function getSystemInfo(paramOne, paramTwo) {
     return new Promise((resolve, reject) => {
-        let result = child_process_1.execSync('systeminfo').toString();
+        let result = (0, child_process_1.execSync)('systeminfo').toString();
         resolve(result);
     });
 }

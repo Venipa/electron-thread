@@ -5,9 +5,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // All of the Node.js APIs are available in this process.
 const path = require("path");
 const et = require("./index");
-const electron_1 = require("electron");
+const remote = require("@electron/remote");
 let packagePath = null;
-const searchPaths = ['app', 'app.asar', 'default_app.asar'];
+const searchPaths = ["app", "app.asar", "default_app.asar"];
 for (packagePath of searchPaths) {
     try {
         packagePath = path.join(process.resourcesPath, packagePath);
@@ -18,28 +18,29 @@ for (packagePath of searchPaths) {
     }
 }
 console.log(packagePath);
-console.log(electron_1.remote.getCurrentWindow().webContents.id);
-console.log(electron_1.remote.getCurrentWindow().id);
+console.log(remote.getCurrentWindow().webContents.id);
+console.log(remote.getCurrentWindow().id);
 let electronThread = new et.ElectronThread({
-    module: require.resolve('./renderer.worker'),
+    module: require.resolve("./renderer.worker"),
     options: {
-        maxCallTime: Infinity
-    }
-});
+        maxCallTime: Infinity,
+    },
+}, remote.getCurrentWindow());
 let test = async () => {
     let start = new Date();
     console.log(start.getMilliseconds());
     for (var i = 0; i < 50; i++) {
         try {
-            electronThread.run({
-                method: 'getProcessId',
-                parameters: ['#', i]
+            electronThread
+                .run({
+                method: "getProcessId",
+                parameters: ["#", i],
             })
-                .then(r => {
+                .then((r) => {
                 console.log(r);
-                console.log((new Date()).getMilliseconds());
+                console.log(new Date().getMilliseconds());
             })
-                .catch(r => console.log(r));
+                .catch((r) => console.log(r));
             //console.log(r);
         }
         catch (err) {
@@ -52,12 +53,10 @@ let test = async () => {
 };
 let test2 = () => {
     let r = electronThread.run({
-        method: 'getResponseAfter',
-        parameters: [15000]
+        method: "getResponseAfter",
+        parameters: [15000],
     });
-    r
-        .then(r => console.log(r))
-        .catch(e => console.log(e));
+    r.then((r) => console.log(r)).catch((e) => console.log(e));
 };
 test();
 //test2();

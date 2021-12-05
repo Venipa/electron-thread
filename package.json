@@ -1,6 +1,6 @@
 {
   "name": "electron-thread",
-  "version": "1.1.1",
+  "version": "1.0.0",
   "description": "Electron thread workers using BrowserWindow headless windows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
     "publish": "tsc && npm pack && npm publish",
     "dev:test": "npm run build && electron ./dist/main.js"
   },
-  "repository": "https://github.com/theCele/electron-thread.git",
+  "repository": "https://github.com/Venipa/electron-thread.git",
   "keywords": [
     "Electron",
     "thread",
@@ -19,10 +19,11 @@
     "headless",
     "typescript"
   ],
-  "author": "Cvetko Stavreski",
+  "author": "Venipa <admin@venipa.net>",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^8.2.0",
-    "typescript": "^3.8.3"
+    "@electron/remote": "^2.0.1",
+    "electron": "^14.2.2",
+    "typescript": "^4.5.2"
   }
 }

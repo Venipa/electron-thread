@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ElectronThread = void 0;
 const electron = require("electron");
-const electron_1 = require("electron");
-const BrowserWindow = (electron_1.remote) ? electron_1.remote.BrowserWindow : electron.BrowserWindow;
+const remote_1 = require("@electron/remote");
+const BrowserWindow = remote_1.BrowserWindow ? remote_1.BrowserWindow : electron.BrowserWindow;
 const ielectron_thread_options_1 = require("./ielectron-thread-options");
 class Thread {
     constructor(launchOptions) {
@@ -35,7 +36,7 @@ class Thread {
     createWindow() {
         var _a;
         this.window = new BrowserWindow((_a = this.threadLaunchOptions.options) === null || _a === void 0 ? void 0 : _a.windowOptions);
-        this.window.loadFile(__dirname + '/thread.html');
+        this.window.loadFile(__dirname + "/thread.html");
     }
     end() {
         var _a;
@@ -88,70 +89,71 @@ class Thread {
     }
 }
 class ElectronThread {
-    constructor(options) {
+    constructor(options, win) {
         this.threads = [];
         this.options = options;
+        this.window = win;
     }
     get activeThreads() {
-        return this.threads.filter(t => t.running == true).length;
+        return this.threads.filter((t) => t.running == true).length;
     }
     run(options) {
         return new Promise((resolve, reject) => {
             var _a, _b, _c, _d, _e, _f, _g;
-            let thread = new Thread(new ielectron_thread_options_1.ThreadLaunchOptions(this.options, options, electron_1.remote.getCurrentWindow()));
+            let thread = new Thread(new ielectron_thread_options_1.ThreadLaunchOptions(this.options, options, this.window));
             this.threads.push(thread);
             //#region IPC SYNC
-            (_a = thread.window) === null || _a === void 0 ? void 0 : _a.webContents.on('ipc-message-sync', (event, channel, ...args) => {
-                if (channel === 'thread-preloader:module-parameters') {
+            (_a = thread.window) === null || _a === void 0 ? void 0 : _a.webContents.on("ipc-message-sync", (event, channel, ...args) => {
+                if (channel === "thread-preloader:module-parameters") {
                     event.returnValue = options;
                 }
             });
             //#endregion
             //#region IPC
-            (_b = thread.window) === null || _b === void 0 ? void 0 : _b.webContents.on('ipc-message', (event, channel, ...args) => {
-                if (channel === 'electron-thread:console.log') {
+            (_b = thread.window) === null || _b === void 0 ? void 0 : _b.webContents.on("ipc-message", (event, channel, ...args) => {
+                if (channel === "electron-thread:console.log") {
                     console.log(...args);
                 }
-                else if (channel === 'electron-thread:console.error') {
+                else if (channel === "electron-thread:console.error") {
                     console.error(...args);
                 }
-                else if (channel === 'thread-preloader:module-return') {
+                else if (channel === "thread-preloader:module-return") {
                     thread.end();
-                    resolve(...args);
+                    resolve(args);
                 }
-                else if (channel === 'thread-preloader:module-error') {
+                else if (channel === "thread-preloader:module-error") {
                     thread.end();
                     reject(...args);
                 }
             });
             //#endregion
             //#region ERROR HANDLER
-            (_c = thread.window) === null || _c === void 0 ? void 0 : _c.webContents.on('did-fail-load', () => {
-                let error = thread.throwError('did-fail-load');
+            (_c = thread.window) === null || _c === void 0 ? void 0 : _c.webContents.on("did-fail-load", () => {
+                let error = thread.throwError("did-fail-load");
                 if (error) {
                     reject(error);
                 }
             });
-            (_d = thread.window) === null || _d === void 0 ? void 0 : _d.webContents.on('crashed', () => {
-                let error = thread.throwError('crashed');
+            (_d = thread.window) === null || _d === void 0 ? void 0 : _d.webContents.on("crashed", () => {
+                let error = thread.throwError("crashed");
                 if (error) {
                     reject(error);
                 }
             });
-            (_e = thread.window) === null || _e === void 0 ? void 0 : _e.webContents.on('unresponsive', () => {
-                let error = thread.throwError('unresponsive');
+            (_e = thread.window) === null || _e === void 0 ? void 0 : _e.webContents.on("unresponsive", () => {
+                let error = thread.throwError("unresponsive");
                 if (error) {
                     reject(error);
                 }
             });
-            (_f = thread.window) === null || _f === void 0 ? void 0 : _f.webContents.on('destroyed', () => {
-                let error = thread.throwError('destroyed');
+            (_f = thread.window) === null || _f === void 0 ? void 0 : _f.webContents.on("destroyed", () => {
+                let error = thread.throwError("destroyed");
                 if (error) {
                     reject(error);
                 }
             });
-            (_g = thread.window) === null || _g === void 0 ? void 0 : _g.webContents.on('preload-error', () => {
-                let error = thread.throwError('preload-error');
+            (_g = thread.window) === null || _g === void 0 ? void 0 : _g.webContents.on("preload-error", () => {
+                let error = thread.throwError("preload-error");
                 if (error) {
                     reject(error);
                 }
@@ -159,18 +161,8 @@ class ElectronThread {
             //#endregion
         });
     }
-    enqueue(thread) {
-        return new Promise(async (resolve) => {
-            let maxConcurrentThreads = (this.options.options) ? ((this.options.options.maxConcurrentThreads) ? this.options.options.maxConcurrentThreads : require('os').cpus().length) : require('os').cpus().length;
-            while (this.activeThreads > maxConcurrentThreads) {
-                await this.wait(500);
-            }
-            this.threads.push(thread);
-            resolve();
-        });
-    }
     end() {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             for (let i = 0; i < this.threads.length; i++) {
                 try {
                     this.threads[i].end();
@@ -178,14 +170,6 @@ class ElectronThread {
                 catch (err) { }
             }
             resolve();
-        });
-    }
-    wait(ms) {
-        return new Promise(resolve => {
-            let timeout = setTimeout(() => {
-                clearTimeout(timeout);
-                resolve();
-            }, ms);
         });
     }
 }
